@@ -1,0 +1,15 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Runtime score data (auto-created by server.js on first run)
+data/scores.json
+
+# Packaging artifacts
+*.zip
+
+# OS
+.DS_Store
+
+# Large reference doc (not needed to run the app)
+*.pdf

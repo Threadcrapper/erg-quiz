@@ -1,0 +1,16 @@
+{
+  "name": "erg-training-quiz",
+  "version": "1.0.0",
+  "description": "Elk River Guns — Product Knowledge & Safety Handbook Training Quiz",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

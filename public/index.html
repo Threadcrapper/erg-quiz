@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ERG Training Quiz</title>
+<style>
+:root{
+  --dark-blue:#1F3864;--mid-blue:#2E5FA3;--light-blue:#D6E4F0;
+  --steel:#A8C8E8;--white:#fff;--gray-lt:#f0f4f8;--gray-mid:#999;
+  --text:#1a1a1a;--correct:#2d8a4e;--wrong:#c0392b;--warn:#e67e22;
+  --radius:10px;--shadow:0 4px 18px rgba(0,0,0,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--gray-lt);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--dark-blue);color:var(--white);padding:14px 24px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+header h1{font-size:1.15rem;font-weight:700;letter-spacing:.5px}
+header p{font-size:.8rem;color:var(--steel);margin-top:1px}
+.logo-box{width:46px;height:46px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.header-right{margin-left:auto;display:flex;gap:8px}
+.btn{cursor:pointer;border:none;border-radius:var(--radius);padding:9px 18px;font-size:.9rem;font-weight:600;transition:all .15s}
+.btn-primary{background:var(--mid-blue);color:#fff}
+.btn-primary:hover{background:#245090}
+.btn-secondary{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-secondary:hover{background:rgba(255,255,255,.25)}
+.btn-success{background:var(--correct);color:#fff}
+.btn-success:hover{filter:brightness(1.1)}
+.btn-danger{background:var(--wrong);color:#fff}
+.btn-danger:hover{filter:brightness(1.1)}
+.btn-outline{background:transparent;color:var(--mid-blue);border:2px solid var(--mid-blue)}
+.btn-outline:hover{background:var(--mid-blue);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+main{flex:1;padding:24px;max-width:860px;margin:0 auto;width:100%}
+
+/* ── SCREEN BASE ─────────────────────────────────────────── */
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── WELCOME ─────────────────────────────────────────────── */
+.welcome-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;text-align:center}
+.welcome-card h2{color:var(--dark-blue);font-size:1.5rem;margin-bottom:6px}
+.welcome-card p{color:#555;margin-bottom:24px}
+.name-form{display:flex;gap:10px;max-width:420px;margin:0 auto 8px}
+.name-form input{flex:1;border:2px solid var(--steel);border-radius:var(--radius);padding:10px 14px;font-size:1rem;outline:none}
+.name-form input:focus{border-color:var(--mid-blue)}
+.greeting{color:var(--mid-blue);font-weight:600;margin-top:6px;font-size:.95rem}
+
+/* ── MODULE GRID ─────────────────────────────────────────── */
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:24px 0 12px}
+.section-head h3{color:var(--dark-blue);font-size:1.1rem}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.module-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative}
+.module-card:hover{border-color:var(--mid-blue);transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,0,0,.16)}
+.module-card.locked{opacity:.5;cursor:not-allowed}
+.mod-label{font-size:.72rem;font-weight:700;color:var(--mid-blue);text-transform:uppercase;letter-spacing:.8px}
+.mod-title{font-size:1rem;font-weight:700;color:var(--dark-blue);margin:4px 0 2px}
+.mod-sub{font-size:.8rem;color:#666}
+.mod-count{font-size:.75rem;color:var(--gray-mid);margin-top:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700;margin-top:6px}
+.badge-pass{background:#d4edda;color:var(--correct)}
+.badge-fail{background:#f8d7da;color:var(--wrong)}
+.badge-notaken{background:var(--light-blue);color:var(--dark-blue)}
+
+/* ── QUIZ ────────────────────────────────────────────────── */
+.quiz-header{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.quiz-meta{flex:1}
+.quiz-meta h3{color:var(--dark-blue);font-size:1rem;font-weight:700}
+.quiz-meta p{font-size:.8rem;color:#666}
+.progress-bar{height:8px;background:var(--light-blue);border-radius:4px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:var(--mid-blue);border-radius:4px;transition:width .3s}
+.q-counter{font-size:.85rem;color:var(--gray-mid);white-space:nowrap}
+.question-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:26px;margin-bottom:18px}
+.q-type-tag{display:inline-block;background:var(--light-blue);color:var(--dark-blue);padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.q-text{font-size:1.05rem;font-weight:600;color:var(--dark-blue);line-height:1.5;margin-bottom:20px}
+.options-list{display:flex;flex-direction:column;gap:10px}
+.option-btn{width:100%;text-align:left;padding:13px 16px;border:2px solid var(--steel);border-radius:var(--radius);background:#fff;font-size:.95rem;cursor:pointer;transition:all .15s;display:flex;gap:10px;align-items:flex-start}
+.option-btn:hover:not(:disabled){border-color:var(--mid-blue);background:var(--light-blue)}
+.option-btn.selected{border-color:var(--mid-blue);background:var(--light-blue)}
+.option-btn.correct{border-color:var(--correct)!important;background:#e8f5e9!important;color:var(--correct)}
+.option-btn.wrong{border-color:var(--wrong)!important;background:#fdecea!important;color:var(--wrong)}
+.option-btn:disabled{cursor:default}
+.opt-key{font-weight:700;color:var(--mid-blue);min-width:18px}
+.feedback-box{margin-top:16px;padding:14px;border-radius:var(--radius);font-size:.9rem;line-height:1.5;display:none}
+.feedback-box.show{display:block}
+.feedback-box.correct-fb{background:#e8f5e9;border-left:4px solid var(--correct);color:#1b5e20}
+.feedback-box.wrong-fb{background:#fdecea;border-left:4px solid var(--wrong);color:#7f0000}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+
+/* ── RESULTS ─────────────────────────────────────────────── */
+.result-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;text-align:center}
+.score-ring{width:120px;height:120px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 18px;font-weight:800}
+.score-ring.pass{background:#e8f5e9;border:6px solid var(--correct);color:var(--correct)}
+.score-ring.fail{background:#fdecea;border:6px solid var(--wrong);color:var(--wrong)}
+.score-ring .pct{font-size:2rem}
+.score-ring .lbl{font-size:.75rem;letter-spacing:.5px}
+.result-card h2{font-size:1.4rem;margin-bottom:6px;color:var(--dark-blue)}
+.result-card p{color:#555;margin-bottom:20px}
+.result-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.review-list{margin-top:28px;text-align:left}
+.review-list h4{color:var(--dark-blue);margin-bottom:12px;font-size:1rem}
+.review-item{background:#fff;border-radius:8px;padding:14px;margin-bottom:10px;border-left:4px solid var(--steel)}
+.review-item.correct-item{border-left-color:var(--correct)}
+.review-item.wrong-item{border-left-color:var(--wrong)}
+.review-q{font-weight:600;font-size:.9rem;margin-bottom:4px}
+.review-a{font-size:.85rem;color:#555}
+.review-a span{font-weight:600}
+.review-a .c{color:var(--correct)}.review-a .w{color:var(--wrong)}
+.review-exp{font-size:.82rem;color:#666;margin-top:4px;font-style:italic}
+
+/* ── ADMIN ───────────────────────────────────────────────── */
+.admin-login{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:32px;max-width:360px;margin:0 auto;text-align:center}
+.admin-login h2{color:var(--dark-blue);margin-bottom:8px}
+.admin-login p{color:#666;margin-bottom:20px;font-size:.9rem}
+.pin-input{width:100%;border:2px solid var(--steel);border-radius:var(--radius);padding:12px;font-size:1.3rem;letter-spacing:6px;text-align:center;outline:none;margin-bottom:12px}
+.pin-input:focus{border-color:var(--mid-blue)}
+.admin-panel{display:none}
+.admin-panel.active{display:block}
+.admin-toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.admin-toolbar h3{color:var(--dark-blue);margin-right:auto;font-size:1.1rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);text-align:center}
+.stat-card .num{font-size:1.8rem;font-weight:800;color:var(--dark-blue)}
+.stat-card .lbl{font-size:.8rem;color:#666}
+.filter-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.filter-row select,.filter-row input{padding:8px 12px;border:1.5px solid var(--steel);border-radius:8px;font-size:.9rem;outline:none;background:#fff}
+.scores-table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead tr{background:var(--dark-blue);color:#fff}
+th{padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--light-blue)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray-lt)}
+.pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:.75rem;font-weight:700}
+.pill-pass{background:#d4edda;color:var(--correct)}
+.pill-fail{background:#f8d7da;color:var(--wrong)}
+.del-btn{background:none;border:none;color:var(--gray-mid);cursor:pointer;font-size:1rem;padding:2px 6px}
+.del-btn:hover{color:var(--wrong)}
+.no-data{text-align:center;padding:40px;color:var(--gray-mid);font-size:.95rem}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--dark-blue);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:.9rem;box-shadow:var(--shadow);transform:translateY(80px);opacity:0;transition:all .3s;z-index:1000}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media(max-width:600px){
+  main{padding:14px}
+  .module-grid{grid-template-columns:1fr 1fr}
+  .name-form{flex-direction:column}
+  .result-btns{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-box">🎯</div>
+  <div>
+    <h1>ERG Training Quiz</h1>
+    <p>Elk River Guns — Product Knowledge &amp; Safety Handbook</p>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-secondary" onclick="App.showScreen('welcome')" id="btn-home" style="display:none">⬅ Home</button>
+    <button class="btn btn-secondary" onclick="App.showAdmin()" id="btn-admin">Admin</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ══ WELCOME ══════════════════════════════════════════════ -->
+<div class="screen active" id="screen-welcome">
+  <div class="welcome-card">
+    <h2>Welcome to ERG Training</h2>
+    <p>Enter your name to begin a module quiz.</p>
+    <div class="name-form">
+      <input type="text" id="emp-name" placeholder="Your full name" maxlength="60" autocomplete="name" onkeydown="if(event.key==='Enter')App.setEmployee()"/>
+      <button class="btn btn-primary" onclick="App.setEmployee()">Start →</button>
+    </div>
+    <p class="greeting" id="greeting"></p>
+  </div>
+
+  <div id="module-select-area" style="display:none">
+    <div class="section-head">
+      <h3>Select a Module to Test</h3>
+      <span id="overall-progress" style="font-size:.85rem;color:var(--gray-mid)"></span>
+    </div>
+    <div class="module-grid" id="module-grid"></div>
+  </div>
+</div>
+
+<!-- ══ QUIZ ═════════════════════════════════════════════════ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-header">
+    <div class="quiz-meta">
+      <h3 id="qhdr-title">Module Title</h3>
+      <p id="qhdr-sub">Subtitle</p>
+      <div class="progress-bar"><div class="progress-fill" id="q-progress"></div></div>
+    </div>
+    <div class="q-counter" id="q-counter">1 / 12</div>
+  </div>
+
+  <div class="question-card">
+    <div class="q-type-tag" id="q-type-tag">Multiple Choice</div>
+    <p class="q-text" id="q-text"></p>
+    <div class="options-list" id="options-list"></div>
+    <div class="feedback-box" id="feedback-box"></div>
+  </div>
+
+  <div class="quiz-nav">
+    <button class="btn btn-outline" onclick="App.quitQuiz()">✕ Quit</button>
+    <button class="btn btn-primary" id="btn-next" onclick="App.nextQuestion()" disabled>Next →</button>
+  </div>
+</div>
+
+<!-- ══ RESULTS ═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-results">
+  <div class="result-card">
+    <div class="score-ring" id="result-ring">
+      <span class="pct" id="result-pct">0%</span>
+      <span class="lbl" id="result-lbl">PASS</span>
+    </div>
+    <h2 id="result-title">Quiz Complete</h2>
+    <p id="result-msg"></p>
+    <div class="result-btns">
+      <button class="btn btn-outline" onclick="App.retryQuiz()">↺ Retry</button>
+      <button class="btn btn-primary" onclick="App.showScreen('welcome')">⬅ Back to Modules</button>
+      <button class="btn btn-secondary" onclick="App.toggleReview()" style="background:var(--mid-blue);color:#fff">Review Answers</button>
+    </div>
+  </div>
+  <div class="review-list" id="review-list" style="display:none">
+    <h4>Answer Review</h4>
+    <div id="review-items"></div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ═════════════════════════════════════════════════ -->
+<div class="screen" id="screen-admin">
+  <div class="admin-login" id="admin-login">
+    <h2>🔒 Admin Access</h2>
+    <p>Enter your 4-digit admin PIN to view all employee scores.</p>
+    <input class="pin-input" type="password" id="admin-pin" maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')App.checkPin()"/>
+    <button class="btn btn-primary" style="width:100%" onclick="App.checkPin()">Unlock Dashboard</button>
+    <p id="pin-error" style="color:var(--wrong);margin-top:10px;font-size:.85rem"></p>
+  </div>
+
+  <div class="admin-panel" id="admin-panel">
+    <div class="admin-toolbar">
+      <h3>Score Dashboard</h3>
+      <button class="btn btn-outline" onclick="App.exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-secondary" style="background:var(--mid-blue);color:#fff" onclick="App.loadAdmin()">↺ Refresh</button>
+      <button class="btn btn-secondary" onclick="App.lockAdmin()">🔒 Lock</button>
+    </div>
+
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="filter-row">
+      <input type="text" id="filter-emp" placeholder="Filter by employee..." oninput="App.filterTable()"/>
+      <select id="filter-mod" onchange="App.filterTable()">
+        <option value="">All Modules</option>
+      </select>
+      <select id="filter-pass" onchange="App.filterTable()">
+        <option value="">All Results</option>
+        <option value="pass">Passed Only</option>
+        <option value="fail">Failed Only</option>
+      </select>
+    </div>
+
+    <div class="scores-table-wrap">
+      <table>
+        <thead><tr>
+          <th>Employee</th><th>Module</th><th>Score</th><th>%</th><th>Result</th><th>Date</th><th></th>
+        </tr></thead>
+        <tbody id="scores-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="questions.js"></script>
+<script>
+const PASS_THRESHOLD = 70; // percent
+
+const App = (() => {
+  let state = {
+    employee: '',
+    moduleIdx: null,
+    questions: [],
+    current: 0,
+    answers: [],       // {chosen, correct, wasCorrect}
+    score: 0,
+    lastModuleId: null,
+    adminPin: null,
+    allScores: [],
+    history: {}        // {moduleId: {score, pct, passed, ts}}
+  };
+
+  // ── Utilities ──────────────────────────────────────────────────
+  function $(id){ return document.getElementById(id) }
+  function toast(msg, dur=2800){
+    const t=$('toast'); t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), dur);
+  }
+  function optKey(i){ return ['A','B','C','D'][i] }
+
+  function showScreen(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    $(`screen-${name}`).classList.add('active');
+    $('btn-home').style.display = name !== 'welcome' ? 'inline-flex' : 'none';
+    if(name==='welcome') buildModuleGrid();
+  }
+
+  // ── Employee ───────────────────────────────────────────────────
+  function setEmployee(){
+    const name = $('emp-name').value.trim();
+    if(!name){ toast('Please enter your name.'); return; }
+    state.employee = name;
+    $('greeting').textContent = `Welcome, ${name}!`;
+    $('module-select-area').style.display = 'block';
+    loadHistory();
+    buildModuleGrid();
+    toast(`Hi ${name.split(' ')[0]}! Choose a module to begin.`);
+  }
+
+  function loadHistory(){
+    const key = `erg_history_${state.employee.toLowerCase().replace(/\s+/g,'_')}`;
+    state.history = JSON.parse(localStorage.getItem(key) || '{}');
+  }
+  function saveHistory(){
+    const key = `erg_history_${state.employee.toLowerCase().replace(/\s+/g,'_')}`;
+    localStorage.setItem(key, JSON.stringify(state.history));
+  }
+
+  // ── Module Grid ────────────────────────────────────────────────
+  function buildModuleGrid(){
+    if(!state.employee) return;
+    const grid = $('module-grid'); grid.innerHTML='';
+    let done=0, total=QUIZ_DATA.length;
+    QUIZ_DATA.forEach((mod, idx) => {
+      const hist = state.history[mod.id];
+      const card = document.createElement('div');
+      card.className = 'module-card';
+      let badge='', badgeClass='badge-notaken', badgeTxt='Not Taken';
+      if(hist){
+        done++;
+        badgeTxt = `${hist.pct}%`;
+        if(hist.passed){ badgeClass='badge-pass'; badgeTxt+=' ✓'; }
+        else { badgeClass='badge-fail'; badgeTxt+=' ✗'; }
+      }
+      card.innerHTML=`
+        <div class="mod-label">${mod.title}</div>
+        <div class="mod-title">${mod.subtitle}</div>
+        <div class="mod-count">${mod.questions.length} questions</div>
+        <span class="badge ${badgeClass}">${badgeTxt}</span>`;
+      card.onclick = () => startQuiz(idx);
+      grid.appendChild(card);
+    });
+    $('overall-progress').textContent = `${done} / ${total} modules completed`;
+  }
+
+  // ── Quiz ───────────────────────────────────────────────────────
+  function startQuiz(moduleIdx){
+    state.moduleIdx  = moduleIdx;
+    const mod        = QUIZ_DATA[moduleIdx];
+    state.questions  = shuffle([...mod.questions]);
+    state.current    = 0;
+    state.answers    = [];
+    state.score      = 0;
+    state.lastModuleId = mod.id;
+
+    $('qhdr-title').textContent = mod.title;
+    $('qhdr-sub').textContent   = mod.subtitle;
+    showScreen('quiz');
+    renderQuestion();
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function renderQuestion(){
+    const q    = state.questions[state.current];
+    const num  = state.current+1;
+    const tot  = state.questions.length;
+    $('q-counter').textContent = `${num} / ${tot}`;
+    $('q-progress').style.width = `${((num-1)/tot)*100}%`;
+
+    const typeLabels = {mc:'Multiple Choice', tf:'True / False', fill:'Complete the Sentence'};
+    $('q-type-tag').textContent = typeLabels[q.type] || q.type;
+    $('q-text').textContent     = q.question || q.q;
+
+    const list = $('options-list'); list.innerHTML='';
+    const opts = getOptions(q);
+    opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<span class="opt-key">${optKey(i)}</span><span>${opt}</span>`;
+      btn.onclick   = () => selectAnswer(i, q);
+      list.appendChild(btn);
+    });
+
+    const fb = $('feedback-box');
+    fb.className='feedback-box'; fb.textContent=''; fb.style.display='none';
+    $('btn-next').disabled=true;
+  }
+
+  function getOptions(q){
+    if(q.type==='tf') return ['True','False'];
+    return q.options;
+  }
+
+  function getCorrect(q){
+    if(q.type==='tf') return q.correct===true ? 0 : 1;
+    return q.correct;
+  }
+
+  function selectAnswer(chosen, q){
+    const btns = $('options-list').querySelectorAll('.option-btn');
+    btns.forEach(b=>b.disabled=true);
+    const correctIdx = getCorrect(q);
+    const wasCorrect = chosen===correctIdx;
+    btns[chosen].classList.add(wasCorrect ? 'correct' : 'wrong');
+    if(!wasCorrect) btns[correctIdx].classList.add('correct');
+
+    const fb = $('feedback-box');
+    if(wasCorrect){
+      fb.className='feedback-box correct-fb show';
+      fb.innerHTML=`✅ <strong>Correct!</strong> ${q.explanation}`;
+      state.score++;
+    } else {
+      const opts=getOptions(q);
+      fb.className='feedback-box wrong-fb show';
+      fb.innerHTML=`❌ <strong>Incorrect.</strong> The correct answer is <strong>"${opts[correctIdx]}"</strong>. ${q.explanation}`;
+    }
+    fb.style.display='block';
+    state.answers.push({question:q.question||q.q, chosen, correctIdx, wasCorrect, options:getOptions(q), explanation:q.explanation});
+    $('btn-next').disabled=false;
+  }
+
+  function nextQuestion(){
+    state.current++;
+    if(state.current >= state.questions.length){ finishQuiz(); return; }
+    renderQuestion();
+    $('btn-next').disabled=true;
+    $('btn-next').textContent = state.current===state.questions.length-1 ? 'Finish ✓' : 'Next →';
+  }
+
+  function finishQuiz(){
+    const mod  = QUIZ_DATA[state.moduleIdx];
+    const tot  = state.questions.length;
+    const pct  = Math.round((state.score/tot)*100);
+    const pass = pct >= PASS_THRESHOLD;
+
+    state.history[mod.id] = {score:state.score, pct, passed:pass, ts:new Date().toISOString()};
+    saveHistory();
+    saveScore(mod, tot, pct, pass);
+    showResults(mod, tot, pct, pass);
+  }
+
+  async function saveScore(mod, tot, pct, pass){
+    try {
+      await fetch('/api/scores', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          employeeName: state.employee,
+          moduleId:     mod.id,
+          moduleTitle:  `${mod.title}: ${mod.subtitle}`,
+          score:        state.score,
+          totalQuestions: tot,
+          passed:       pass,
+          timestamp:    new Date().toISOString(),
+          answers:      state.answers.map(a=>({q:a.question,correct:a.wasCorrect}))
+        })
+      });
+    } catch(e){ /* server unavailable — local history still saved */ }
+  }
+
+  function showResults(mod, tot, pct, pass){
+    const ring=$('result-ring');
+    ring.className='score-ring '+(pass?'pass':'fail');
+    $('result-pct').textContent=pct+'%';
+    $('result-lbl').textContent=pass?'PASS':'FAIL';
+    $('result-title').textContent=`${mod.subtitle} — Quiz Complete`;
+    $('result-msg').innerHTML=pass
+      ? `🎉 Well done! You scored <strong>${state.score}/${tot}</strong> (${pct}%) — <strong>PASSED</strong> (≥${PASS_THRESHOLD}% required).`
+      : `You scored <strong>${state.score}/${tot}</strong> (${pct}%). A score of <strong>${PASS_THRESHOLD}%</strong> is required to pass. Review the material and try again.`;
+    $('review-list').style.display='none';
+    buildReview();
+    showScreen('results');
+  }
+
+  function buildReview(){
+    const list=$('review-items'); list.innerHTML='';
+    state.answers.forEach((a,i) => {
+      const div=document.createElement('div');
+      div.className='review-item '+(a.wasCorrect?'correct-item':'wrong-item');
+      const chosenTxt = a.options[a.chosen] || '—';
+      const correctTxt = a.options[a.correctIdx] || '—';
+      div.innerHTML=`
+        <div class="review-q">Q${i+1}: ${a.question}</div>
+        <div class="review-a">
+          Your answer: <span class="${a.wasCorrect?'c':'w'}">${chosenTxt}</span>
+          ${!a.wasCorrect ? ` | Correct: <span class="c">${correctTxt}</span>` : ''}
+        </div>
+        <div class="review-exp">${a.explanation}</div>`;
+      list.appendChild(div);
+    });
+  }
+
+  function toggleReview(){
+    const rv=$('review-list');
+    rv.style.display = rv.style.display==='none' ? 'block' : 'none';
+  }
+
+  function retryQuiz(){ startQuiz(state.moduleIdx); }
+
+  function quitQuiz(){
+    if(confirm('Quit this quiz? Your progress will not be saved.')) showScreen('welcome');
+  }
+
+  // ── Admin ──────────────────────────────────────────────────────
+  function showAdmin(){
+    $('admin-login').style.display='block';
+    $('admin-panel').classList.remove('active');
+    $('admin-pin').value='';
+    $('pin-error').textContent='';
+    showScreen('admin');
+  }
+
+  async function checkPin(){
+    const pin = $('admin-pin').value.trim();
+    try {
+      const res = await fetch(`/api/scores?pin=${encodeURIComponent(pin)}`);
+      if(!res.ok){ $('pin-error').textContent='Incorrect PIN. Please try again.'; return; }
+      state.allScores = await res.json();
+      state.adminPin  = pin;
+      $('admin-login').style.display='none';
+      $('admin-panel').classList.add('active');
+      renderAdmin(state.allScores);
+      toast('Admin dashboard unlocked.');
+    } catch(e){
+      $('pin-error').textContent='Could not connect to server.';
+    }
+  }
+
+  function lockAdmin(){
+    state.adminPin=null;
+    $('admin-panel').classList.remove('active');
+    $('admin-login').style.display='block';
+    $('admin-pin').value='';
+  }
+
+  async function loadAdmin(){
+    if(!state.adminPin) return;
+    const res = await fetch(`/api/scores?pin=${encodeURIComponent(state.adminPin)}`);
+    if(res.ok){ state.allScores=await res.json(); renderAdmin(state.allScores); toast('Scores refreshed.'); }
+  }
+
+  function renderAdmin(scores){
+    // Stats
+    const employees = [...new Set(scores.map(s=>s.employeeName))];
+    const passed    = scores.filter(s=>s.passed).length;
+    const avgPct    = scores.length ? Math.round(scores.reduce((a,s)=>a+s.percentage,0)/scores.length) : 0;
+    $('stats-grid').innerHTML=`
+      <div class="stat-card"><div class="num">${scores.length}</div><div class="lbl">Total Quizzes Taken</div></div>
+      <div class="stat-card"><div class="num">${employees.length}</div><div class="lbl">Employees Tested</div></div>
+      <div class="stat-card"><div class="num">${passed}</div><div class="lbl">Passed</div></div>
+      <div class="stat-card"><div class="num">${scores.length-passed}</div><div class="lbl">Failed</div></div>
+      <div class="stat-card"><div class="num">${avgPct}%</div><div class="lbl">Average Score</div></div>`;
+
+    // Module filter
+    const mods=[...new Set(scores.map(s=>s.moduleTitle))].sort();
+    const modSel=$('filter-mod');
+    const prevMod=modSel.value;
+    modSel.innerHTML='<option value="">All Modules</option>'+mods.map(m=>`<option value="${m}"${m===prevMod?' selected':''}>${m}</option>`).join('');
+    filterTable();
+  }
+
+  function filterTable(){
+    const empF  = $('filter-emp').value.toLowerCase();
+    const modF  = $('filter-mod').value;
+    const passF = $('filter-pass').value;
+    const filtered = state.allScores.filter(s=>{
+      if(empF && !s.employeeName.toLowerCase().includes(empF)) return false;
+      if(modF && s.moduleTitle!==modF) return false;
+      if(passF==='pass' && !s.passed) return false;
+      if(passF==='fail' && s.passed) return false;
+      return true;
+    }).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+
+    const tbody=$('scores-tbody');
+    if(!filtered.length){
+      tbody.innerHTML=`<tr><td colspan="7" class="no-data">No records match your filters.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = filtered.map(s=>`
+      <tr>
+        <td>${s.employeeName}</td>
+        <td>${s.moduleTitle}</td>
+        <td>${s.score}/${s.totalQuestions}</td>
+        <td>${s.percentage}%</td>
+        <td><span class="pill ${s.passed?'pill-pass':'pill-fail'}">${s.passed?'PASS':'FAIL'}</span></td>
+        <td>${new Date(s.timestamp).toLocaleDateString()} ${new Date(s.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
+        <td><button class="del-btn" onclick="App.deleteScore(${s.id})" title="Delete record">🗑</button></td>
+      </tr>`).join('');
+  }
+
+  async function deleteScore(id){
+    if(!confirm('Delete this score record?')) return;
+    const res = await fetch(`/api/scores/${id}?pin=${encodeURIComponent(state.adminPin)}`, {method:'DELETE'});
+    if(res.ok){ state.allScores=state.allScores.filter(s=>s.id!==id); renderAdmin(state.allScores); toast('Record deleted.'); }
+  }
+
+  function exportCSV(){
+    window.open(`/api/export?pin=${encodeURIComponent(state.adminPin)}`);
+  }
+
+  // ── Public API ─────────────────────────────────────────────────
+  return { showScreen, setEmployee, startQuiz, nextQuestion, quitQuiz, toggleReview, retryQuiz,
+           showAdmin, checkPin, lockAdmin, loadAdmin, filterTable, deleteScore, exportCSV };
+})();
+</script>
+</body>
+</html>
