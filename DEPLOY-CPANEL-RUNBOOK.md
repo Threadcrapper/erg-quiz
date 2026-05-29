@@ -4,7 +4,7 @@ _Reseller account · elkriverguns · target: `training.elkriverguns.com`_
 
 We're hosting it on your own reseller account using cPanel's **Setup Node.js App** (the Node.js page in your screenshot). No Render/Railway, no monthly fee. The score file lives on real disk, so records persist. Total time ~15 minutes.
 
-**Deliverable to upload:** `erg_quiz_deploy.zip` (in this folder — clean app, no node_modules).
+**Source repo:** `https://github.com/Threadcrapper/erg-quiz.git` — we'll clone it straight into cPanel so future updates are just `git pull` + Restart. (A `erg_quiz_deploy.zip` is also in this folder as a manual fallback — see the bottom of this doc.)
 
 ---
 
@@ -15,12 +15,18 @@ We're hosting it on your own reseller account using cPanel's **Setup Node.js App
 3. Let it set the default document root (e.g. `/home/USER/training.elkriverguns.com`). Note the path — you'll point the Node app at the subdomain in Step 3, so the exact docroot doesn't matter much.
 4. Save.
 
-## Step 2 — Upload the app files
+## Step 2 — Clone the repo via Git Version Control
 
-1. cPanel → **File Manager**. Go to your home directory and create a folder for the app, e.g. `nodeapps/erg_quiz` (keep app code **outside** `public_html` so source isn't web-served directly).
-2. Upload `erg_quiz_deploy.zip` into `nodeapps/erg_quiz`.
-3. Select it → **Extract**. You should end up with `server.js`, `package.json`, `package-lock.json`, `public/`, and `data/scores.json` directly inside `nodeapps/erg_quiz`.
-4. Delete the zip after extracting.
+1. cPanel → **Git™ Version Control** → **Create**.
+2. **Clone a Repository:** toggle on.
+   - **Clone URL:** `https://github.com/Threadcrapper/erg-quiz.git`
+   - **Repository Path:** `nodeapps/erg_quiz` (keeps app code outside `public_html`).
+   - **Repository Name:** `erg-quiz`
+3. **Create**. cPanel clones the repo into `nodeapps/erg_quiz`.
+   - _Private repo?_ The clone needs read access. Either make the repo public (it's just quiz content, no secrets), or add a deploy key / use an HTTPS token in the clone URL. Easiest for now: a public repo.
+   - _No internet clone allowed on the plan?_ Fall back to the zip method at the bottom of this doc.
+
+**To update the app later:** Git Version Control → **Manage** → **Pull (or Deploy) HEAD Commit**, then Restart the Node app (Step 4). No re-uploading.
 
 ## Step 3 — Create the Node.js application
 
@@ -59,11 +65,17 @@ That's it — it's live.
 - **"Cannot find module express"?** You skipped Step 4 — run **NPM Install** again, then Restart.
 - **Wrong Node version error?** Switch the version dropdown to another LTS and Restart. The app only needs Node ≥16.
 - **Admin PIN.** Left as Jim's default `4473` per your call — leave security for him to tighten. (When he's ready: it's a one-line change in `server.js`, or set an `ADMIN_PIN` environment variable in the Node.js app's Environment Variables section — no redeploy needed.)
-- **Updating the app later.** Replace files in `nodeapps/erg_quiz` (re-upload changed files), then click **Restart**. Don't overwrite `data/scores.json` or you'll wipe records.
+- **Updating the app later.** In the repo, commit + push a change; then in cPanel Git Version Control → **Manage** → **Pull/Deploy HEAD**, and **Restart** the Node app. `data/scores.json` is gitignored, so pulls never touch live records.
 - **Link it for staff.** Once verified, add a menu item / bookmark to `https://training.elkriverguns.com`, or just share the URL.
 
 ---
 
-## Optional: deploy via Git instead of zip
+## Fallback: manual zip upload (if Git clone isn't available)
 
-If you'd rather Jim push updates from a repo, cPanel → **Git Version Control** can clone a repo into the app root and you `git pull` + Restart to update. We'd put the quiz in its own small repo first. The zip route above is faster for getting it live today; Git is nicer for ongoing updates. Say the word and I'll stage the standalone repo.
+If the plan won't clone from GitHub (no outbound Git, or you'd rather not make the repo public):
+
+1. cPanel → **File Manager** → create `nodeapps/erg_quiz`.
+2. Upload `erg_quiz_deploy.zip` (in this folder) → **Extract** so `server.js`, `package.json`, `public/`, etc. sit directly in `nodeapps/erg_quiz`. Delete the zip.
+3. Continue from **Step 3** above.
+
+To update later with this method: re-upload changed files and **Restart**. Don't overwrite `data/scores.json`.
